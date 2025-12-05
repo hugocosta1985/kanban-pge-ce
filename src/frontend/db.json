@@ -1,0 +1,47 @@
+{
+  "tarefas": [
+    {
+      "id": "1",
+      "title": "Implementar Autenticação JWT",
+      "description": "Criar interceptor para anexar o token nas requisições e tratar o refresh token automático.",
+      "priority": "Urgente",
+      "status": "A Fazer",
+      "dueDate": "2025-12-20T00:00:00.000Z",
+      "tags": ["Security", "Backend", "Auth"]
+    },
+    {
+      "id": "2",
+      "title": "Criar Layout Responsivo",
+      "description": "Ajustar o grid do Kanban para dispositivos móveis usando Tailwind CSS.",
+      "priority": "Alta",
+      "status": "Concluído",
+      "dueDate": "2025-11-15T00:00:00.000Z",
+      "tags": ["Frontend", "CSS", "Mobile"]
+    },
+    {
+      "id": "3",
+      "title": "Documentação do Storybook",
+      "description": "Documentar os componentes base (Botão, Input, Card) para a biblioteca de design system.",
+      "priority": "Baixa",
+      "status": "Concluído",
+      "tags": ["Docs", "Design System"]
+    },
+    {
+      "id": "4",
+      "title": "Integração com SonarQube",
+      "description": "Configurar pipeline de CI/CD para análise de qualidade de código.",
+      "priority": "Média",
+      "status": "Em Andamento",
+      "tags": ["DevOps", "CI/CD"]
+    },
+    {
+      "id": "5",
+      "title": "Refatorar Store com Signals",
+      "description": "Migrar a gestão de estado antiga baseada em NgRx para Angular Signals.",
+      "priority": "Urgente",
+      "status": "Em Andamento",
+      "dueDate": "2024-01-10T00:00:00.000Z",
+      "tags": ["Refactor", "Performance"]
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+services:
+  frontend:
+    build: .
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: always
+
+  backend:
+    image: node:20-alpine
+    working_dir: /data
+    volumes:
+      - ./db.json:/data/db.json
+    command: sh -c "npm install -g json-server@0.17.4 && json-server db.json --port 3000 --host 0.0.0.0 --no-cors"
+    ports:
+      - "3000:3000"
+    restart: always

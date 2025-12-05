@@ -1,59 +1,17 @@
-# KanbanPgeCe
+# Sistema de Controle de Tarefas (Kanban) - PGE-CE
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 19.2.19.
+Este projeto é uma aplicação Single Page Application (SPA) desenvolvida como teste prático para a vaga de Desenvolvedor Front-End da Procuradoria Geral do Estado do Ceará.
 
-## Development server
+A aplicação implementa um quadro Kanban interativo com gerenciamento completo de tarefas, validações complexas e arquitetura moderna.
 
-To start a local development server, run:
+## Tecnologias e Arquitetura
 
-```bash
-ng serve
-```
+O projeto foi construído utilizando as práticas mais recentes do ecossistema Angular (v19):
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
-
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
-
-```bash
-ng generate component component-name
-```
-
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
-
-```bash
-ng generate --help
-```
-
-## Building
-
-To build the project run:
-
-```bash
-ng build
-```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+- **Core:** Angular 19 (Standalone Components).
+- **Gerenciamento de Estado:** Angular Signals (`writableSignal`, `computed`) para reatividade granular e performance (Zone-less ready).
+- **UI Components:** PrimeNG 19 (Card, Dialog, Toast, Inputs).
+- **Estilização:** Tailwind CSS v3 (Utility-first CSS).
+- **Drag & Drop:** Angular CDK (@angular/cdk/drag-drop).
+- **API Mock:** JSON-Server.
+- **Infraestrutura:** Docker & Docker Compose (Nginx + Node).
