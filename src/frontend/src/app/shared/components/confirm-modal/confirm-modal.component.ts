@@ -23,7 +23,6 @@ export class ConfirmModalComponent {
   @Input() title = 'Confirmação';
   @Input() message = 'Tem certeza que deseja prosseguir?';
 
-  // Output para o pai saber o que aconteceu
   @Output() visibleChange = new EventEmitter<boolean>();
   @Output() confirm = new EventEmitter<void>();
 
