@@ -1,1 +1,69 @@
-<p>task-card works!</p>
+<p-card
+  [style]="{ width: '100%', marginBottom: '10px' }"
+  styleClass="shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+>
+  <ng-template pTemplate="header">
+    <div class="flex justify-between items-start p-3 pb-0">
+      <p-tag
+        [value]="task().priority"
+        [severity]="prioritySeverity()"
+        [rounded]="true"
+      >
+      </p-tag>
+
+      <div class="flex gap-1">
+        <p-button
+          icon="pi pi-pencil"
+          [text]="true"
+          severity="secondary"
+          size="small"
+          (onClick)="edit.emit(task()); $event.stopPropagation()"
+          pTooltip="Editar"
+          tooltipPosition="bottom"
+        >
+        </p-button>
+        <p-button
+          icon="pi pi-trash"
+          [text]="true"
+          severity="danger"
+          size="small"
+          (onClick)="delete.emit(task()); $event.stopPropagation()"
+          pTooltip="Excluir"
+          tooltipPosition="bottom"
+        >
+        </p-button>
+      </div>
+    </div>
+  </ng-template>
+
+  <div class="px-1">
+    <h4 class="font-bold text-lg mb-2 text-gray-800">{{ task().title }}</h4>
+
+    @if (task().description) {
+    <p class="text-sm text-gray-600 mb-3 line-clamp-2">
+      {{ task().description }}
+    </p>
+    }
+
+    <div class="flex flex-wrap gap-1 mt-2">
+      @for (tag of task().tags; track tag) {
+      <span
+        class="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full border border-gray-200"
+      >
+        #{{ tag }}
+      </span>
+      }
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    @if (task().dueDate) {
+    <div
+      class="flex items-center gap-2 text-xs text-gray-500 mt-2 border-t pt-2"
+    >
+      <i class="pi pi-calendar"></i>
+      <span>{{ task().dueDate | date : "dd/MM/yyyy" }}</span>
+    </div>
+    }
+  </ng-template>
+</p-card>

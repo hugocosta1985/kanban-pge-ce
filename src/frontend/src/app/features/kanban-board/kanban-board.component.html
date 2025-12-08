@@ -1,1 +1,122 @@
-<p>kanban-board works!</p>
+<div class="flex flex-col h-full bg-gray-50">
+  <div class="p-6 pb-2 flex flex-col gap-4">
+    <div class="flex justify-between items-center flex-wrap gap-2">
+      <div class="flex items-center gap-4">
+        <div>
+          <h1 class="text-2xl font-bold text-gray-800">Quadro de Tarefas</h1>
+          <p class="text-gray-500">Gerencie suas atividades diárias</p>
+        </div>
+
+        <app-urgent-badge></app-urgent-badge>
+      </div>
+
+      <p-button label="Nova Tarefa" icon="pi pi-plus" (onClick)="createTask()">
+      </p-button>
+    </div>
+
+    <div
+      class="flex flex-col sm:flex-row gap-3 bg-white p-3 rounded-lg shadow-sm border border-gray-100 items-stretch sm:items-center flex-wrap"
+    >
+      <div class="flex items-center gap-2 mb-2 sm:mb-0">
+        <i class="pi pi-filter text-gray-400"></i>
+        <span class="text-gray-500 font-medium sm:hidden">Filtros:</span>
+      </div>
+
+      <p-iconfield class="w-full sm:w-64">
+        <p-inputicon styleClass="pi pi-search" />
+        <input
+          type="text"
+          pInputText
+          placeholder="Buscar..."
+          [(ngModel)]="searchTerm"
+          (ngModelChange)="onSearchChange($event)"
+          class="w-full"
+        />
+      </p-iconfield>
+
+      <p-dropdown
+        [options]="priorityOptions"
+        [(ngModel)]="selectedPriority"
+        (onChange)="onPriorityChange($event.value)"
+        placeholder="Prioridade"
+        [showClear]="true"
+        styleClass="w-full sm:w-[180px]"
+        [style]="{ width: '100%' }"
+      >
+      </p-dropdown>
+      <div class="w-full sm:w-auto">
+        <p-datepicker
+          [(ngModel)]="rangeDates"
+          (ngModelChange)="onDateRangeChange($event)"
+          selectionMode="range"
+          [readonlyInput]="true"
+          dateFormat="dd/mm/yy"
+          [showIcon]="true"
+          placeholder="Filtrar por data..."
+          styleClass="w-full sm:w-64"
+          [style]="{ width: '100%' }"
+          [showButtonBar]="true"
+          (onClearClick)="onDateRangeChange([])"
+        >
+        </p-datepicker>
+      </div>
+    </div>
+  </div>
+
+  <div
+    class="flex-1 flex flex-col md:flex-row gap-6 p-4 md:p-6 overflow-y-auto md:overflow-y-hidden md:overflow-x-auto items-start bg-gray-50 h-full"
+    cdkDropListGroup
+  >
+    @for (status of columns; track status) {
+    <div
+      class="flex flex-col shrink-0 w-full md:w-80 bg-gray-100 rounded-xl shadow-sm border border-gray-200 md:h-full md:max-h-full min-h-[300px]"
+    >
+      <div
+        class="p-3 font-bold text-gray-700 uppercase text-sm tracking-wider border-b border-gray-200 bg-white rounded-t-xl flex justify-between items-center sticky top-0 z-10"
+      >
+        {{ status }}
+        <span
+          class="bg-gray-200 text-gray-600 text-xs px-2 py-0.5 rounded-full"
+        >
+          {{ getTasksByStatus(status).length }}
+        </span>
+      </div>
+
+      <div
+        cdkDropList
+        [cdkDropListData]="getTasksByStatus(status)"
+        (cdkDropListDropped)="drop($event, status)"
+        class="flex-1 p-2 flex flex-col gap-3 overflow-y-auto min-h-[150px]"
+      >
+        @for (task of getTasksByStatus(status); track task.id) {
+        <div
+          cdkDrag
+          [cdkDragData]="task"
+          class="cursor-move touch-manipulation"
+        >
+          <div
+            *cdkDragPlaceholder
+            class="bg-gray-200 border-2 border-dashed border-gray-400 rounded-lg h-24 mb-3"
+          ></div>
+
+          <app-task-card
+            [task]="task"
+            (edit)="onEdit($event)"
+            (delete)="onDelete($event)"
+          >
+          </app-task-card>
+        </div>
+        }
+      </div>
+    </div>
+    }
+  </div>
+
+  <app-confirm-modal
+    [(visible)]="isDeleteModalOpen"
+    title="Excluir Tarefa"
+    [message]="'Tem certeza que deseja excluir: ' + taskToDelete?.title + '?'"
+    (confirm)="confirmDelete()"
+  >
+  </app-confirm-modal>
+</div>

@@ -1,1 +1,33 @@
-<p>confirm-modal works!</p>
+<p-dialog
+  [header]="title"
+  [(visible)]="visible"
+  [modal]="true"
+  [style]="{ width: '450px' }"
+  (onHide)="onCancel()"
+  [draggable]="false"
+  [resizable]="false"
+>
+  <div class="flex items-center gap-3 mb-5">
+    <i class="pi pi-exclamation-triangle text-yellow-500 text-3xl"></i>
+    <span class="text-gray-700 text-lg">{{ message }}</span>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <p-button
+      label="Não"
+      icon="pi pi-times"
+      [text]="true"
+      severity="secondary"
+      (onClick)="onCancel()"
+    >
+    </p-button>
+    <p-button
+      label="Sim, excluir"
+      icon="pi pi-check"
+      severity="danger"
+      [autofocus]="true"
+      (onClick)="onConfirm()"
+    >
+    </p-button>
+  </ng-template>
+</p-dialog>

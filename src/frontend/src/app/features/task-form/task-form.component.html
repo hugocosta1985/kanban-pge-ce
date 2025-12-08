@@ -1,1 +1,103 @@
 <p>task-form works!</p>
+<div class="flex justify-center p-6 bg-gray-50 min-h-screen">
+  <p-card
+    [header]="isEditMode ? 'Editar Tarefa' : 'Nova Tarefa'"
+    [style]="{ width: '100%', maxWidth: '600px' }"
+  >
+    <form
+      [formGroup]="form"
+      (ngSubmit)="onSubmit()"
+      class="flex flex-col gap-4"
+    >
+      <div class="flex flex-col gap-1">
+        <label for="title" class="font-semibold text-gray-700">Título*</label>
+        <input
+          pInputText
+          id="title"
+          formControlName="title"
+          placeholder="Ex: Corrigir view da Home"
+        />
+
+        @if (form.get('title')?.touched && form.get('title')?.errors) {
+        <small class="text-red-500">
+          @if (form.get('title')?.hasError('required')) { Título é obrigatório.
+          } @if (form.get('title')?.hasError('minlength')) { Mínimo 5
+          caracteres. } @if (form.get('title')?.hasError('maxlength')) { Máximo
+          80 caracteres. } @if (form.get('title')?.hasError('forbiddenWord')) {
+          Palavra proibida detectada. }
+        </small>
+        }
+      </div>
+
+      <div class="flex flex-col gap-1">
+        <label for="desc" class="font-semibold text-gray-700">Descrição</label>
+        <textarea
+          pInputTextarea
+          id="desc"
+          formControlName="description"
+          rows="3"
+          autoResize="true"
+        ></textarea>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="flex flex-col gap-1">
+          <label class="font-semibold text-gray-700">Prioridade*</label>
+          <p-dropdown
+            [options]="priorities"
+            formControlName="priority"
+            [style]="{ width: '100%' }"
+          ></p-dropdown>
+        </div>
+
+        <div class="flex flex-col gap-1">
+          <label class="font-semibold text-gray-700">Status Inicial*</label>
+          <p-dropdown
+            [options]="statusOptions"
+            formControlName="status"
+            [style]="{ width: '100%' }"
+          ></p-dropdown>
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-1">
+        <label class="font-semibold text-gray-700"> Prazo </label>
+        <p-datepicker
+          formControlName="dueDate"
+          dateFormat="dd/mm/yy"
+          [showIcon]="true"
+          [minDate]="minDate"
+        ></p-datepicker>
+
+        @if (form.get('dueDate')?.touched &&
+        form.get('dueDate')?.hasError('required')) {
+        <small class="text-red-500"
+          >Prazo é obrigatório para tarefas urgentes.</small
+        >
+        }
+      </div>
+
+      <div class="flex flex-col gap-1">
+        <label class="font-semibold text-gray-700">Tags</label>
+        <p-chips
+          formControlName="tags"
+          placeholder="Digite e dê Enter"
+        ></p-chips>
+      </div>
+
+      <div class="flex justify-end gap-2 mt-4 pt-4 border-t">
+        <p-button
+          label="Cancelar"
+          severity="secondary"
+          [text]="true"
+          (onClick)="onCancel()"
+        ></p-button>
+        <p-button
+          label="Salvar"
+          type="submit"
+          [disabled]="form.invalid"
+        ></p-button>
+      </div>
+    </form>
+  </p-card>
+</div>

@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { Task } from '../models/task.model.component';
+import { Task } from '../models/task.model';
 import { Observable } from 'rxjs';
 
 @Injectable({

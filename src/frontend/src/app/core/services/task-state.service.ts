@@ -1,10 +1,9 @@
-import { computed, inject, Injectable, signal } from '@angular/core';
+import { Injectable, signal, computed, inject } from '@angular/core';
+import { Task, TaskStatus, TaskPriority } from '../models/task.model';
 import { TaskService } from './task.service';
-import { Task, TaskPriority } from '../models/task.model.component';
+import { moveItemInArray } from '@angular/cdk/drag-drop';
 
-@Injectable({
-  providedIn: 'root',
-})
+@Injectable({ providedIn: 'root' })
 export class TaskStateService {
   private taskService = inject(TaskService);
 
@@ -78,8 +77,39 @@ export class TaskStateService {
     };
   });
 
+  getTasksByStatus(status: TaskStatus): Task[] {
+    return (this.tasksByStatus() as any)[status] || [];
+  }
+
   loadTasks() {
     this.taskService.getAll().subscribe((tasks) => this.tasks.set(tasks));
+  }
+
+  addTask(task: Task) {
+    this.tasks.update((current) => [...current, task]);
+    this.taskService.create(task).subscribe({
+      error: (err) => console.warn('API Error (salvo localmente):', err),
+    });
+  }
+
+  updateTask(updatedTask: Task) {
+    this.tasks.update((current) =>
+      current.map((t) => (t.id === updatedTask.id ? updatedTask : t))
+    );
+    this.taskService.update(updatedTask).subscribe({
+      error: (err) => console.warn('API Error (salvo localmente):', err),
+    });
+  }
+
+  updateTaskStatus(taskId: string, newStatus: TaskStatus) {
+    this.tasks.update((tasks) =>
+      tasks.map((t) => (t.id === taskId ? { ...t, status: newStatus } : t))
+    );
+
+    const task = this.tasks().find((t) => t.id === taskId);
+    if (task) {
+      this.taskService.update(task).subscribe();
+    }
   }
 
   deleteTask(taskId: string) {
@@ -89,8 +119,13 @@ export class TaskStateService {
     });
   }
 
-  getTaskById(id: string): Task | undefined {
-    return this.tasks().find((t) => t.id === id);
+  reorderTask(status: TaskStatus, previousIndex: number, currentIndex: number) {
+    this.tasks.update((allTasks) => {
+      const tasksInColumn = allTasks.filter((t) => t.status === status);
+      moveItemInArray(tasksInColumn, previousIndex, currentIndex);
+      const otherTasks = allTasks.filter((t) => t.status !== status);
+      return [...otherTasks, ...tasksInColumn];
+    });
   }
 
   setSearchFilter(term: string) {
@@ -101,5 +136,9 @@ export class TaskStateService {
   }
   setDateRangeFilter(range: Date[] | null) {
     this.dateRangeFilter.set(range);
+  }
+
+  getTaskById(id: string): Task | undefined {
+    return this.tasks().find((t) => t.id === id);
   }
 }
