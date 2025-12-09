@@ -11,7 +11,7 @@ import { ButtonModule } from 'primeng/button';
 @Component({
   selector: 'app-confirm-modal',
   standalone: true,
-  imports: [DialogModule, ButtonModule], // CommonModule removido
+  imports: [DialogModule, ButtonModule],
   templateUrl: './confirm-modal.component.html',
   styleUrl: './confirm-modal.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
