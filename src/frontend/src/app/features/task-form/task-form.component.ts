@@ -1,17 +1,23 @@
-import { Component, OnInit, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import {
+  Component,
+  OnInit,
+  inject,
+  input,
+  effect,
+  DestroyRef,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   FormBuilder,
+  FormControl,
   FormGroup,
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { Router, ActivatedRoute } from '@angular/router';
-import { ChangeDetectorRef } from '@angular/core';
+import { Router } from '@angular/router';
 
 import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
-import { CalendarModule } from 'primeng/calendar';
 import { DatePickerModule } from 'primeng/datepicker';
 import { DropdownModule } from 'primeng/dropdown';
 import { ChipsModule } from 'primeng/chips';
@@ -23,15 +29,22 @@ import { TaskStateService } from '../../core/services/task-state.service';
 import { Task, TaskPriority, TaskStatus } from '../../core/models/task.model';
 import { forbiddenWordValidator } from '../../shared/directives/forbidden-word.validator';
 
+interface TaskForm {
+  title: FormControl<string>;
+  description: FormControl<string | null>;
+  priority: FormControl<TaskPriority>;
+  status: FormControl<TaskStatus>;
+  dueDate: FormControl<Date | null>;
+  tags: FormControl<string[]>;
+}
+
 @Component({
   selector: 'app-task-form',
   standalone: true,
   imports: [
-    CommonModule,
     ReactiveFormsModule,
     InputTextModule,
     TextareaModule,
-    CalendarModule,
     DatePickerModule,
     DropdownModule,
     ChipsModule,
@@ -46,111 +59,127 @@ export class TaskFormComponent implements OnInit {
   private taskState = inject(TaskStateService);
   private router = inject(Router);
   private messageService = inject(MessageService);
-  private route = inject(ActivatedRoute);
-  private cdr = inject(ChangeDetectorRef);
+  private destroyRef = inject(DestroyRef);
 
-  minDate = new Date();
+  id = input<string>();
 
-  form!: FormGroup;
+  readonly priorities: TaskPriority[] = ['Baixa', 'Média', 'Alta', 'Urgente'];
+  readonly statusOptions: TaskStatus[] = [
+    'A Fazer',
+    'Em Andamento',
+    'Concluído',
+  ];
+  readonly minDate = new Date();
+
+  form!: FormGroup<TaskForm>;
   isEditMode = false;
-  taskId: string | null = null;
 
-  priorities: TaskPriority[] = ['Baixa', 'Média', 'Alta', 'Urgente'];
-  statusOptions: TaskStatus[] = ['A Fazer', 'Em Andamento', 'Concluído'];
+  constructor() {
+    effect(() => {
+      const taskId = this.id();
+      console.log('ID recebido pelo Router:', taskId); // Debug
+
+      if (taskId) {
+        this.isEditMode = true;
+        this.loadTaskData(taskId);
+      } else {
+        console.warn('Nenhum ID detectado - Modo Criação');
+      }
+    });
+  }
 
   ngOnInit() {
     this.initForm();
-    this.checkEditMode();
     this.setupValidationReactors();
   }
 
   private initForm() {
-    this.form = this.fb.group({
-      title: [
-        '',
-        [
+    this.form = this.fb.group<TaskForm>({
+      title: new FormControl('', {
+        validators: [
           Validators.required,
           Validators.minLength(5),
           Validators.maxLength(80),
           forbiddenWordValidator(),
         ],
-      ],
-      description: [''],
-      priority: ['Baixa' as TaskPriority, Validators.required],
-      status: ['A Fazer' as TaskStatus, Validators.required],
-      dueDate: [null],
-      tags: [[]],
+        nonNullable: true,
+      }),
+      description: new FormControl(''),
+      priority: new FormControl('Baixa', { nonNullable: true }),
+      status: new FormControl('A Fazer', { nonNullable: true }),
+      dueDate: new FormControl(null),
+      tags: new FormControl([], { nonNullable: true }),
     });
   }
 
-  private setupValidationReactors() {
-    this.form.get('priority')?.valueChanges.subscribe((priority) => {
-      this.form.markAllAsTouched();
-      const dateControl = this.form.get('dueDate');
+  private loadTaskData(id: string) {
+    const task = this.taskState.getTaskById(id);
 
-      if (priority === 'Urgente') {
-        dateControl?.setValidators([Validators.required]);
-      } else {
-        dateControl?.clearValidators();
-      }
-      dateControl?.updateValueAndValidity();
-      this.form.updateValueAndValidity();
-      this.cdr.markForCheck();
-    });
-  }
-
-  private checkEditMode() {
-    const id = this.route.snapshot.paramMap.get('id');
-    if (id) {
-      this.isEditMode = true;
-      this.taskId = id;
-      const task = this.taskState.getTaskById(id);
-      if (task) {
-        const patchData = {
-          ...task,
-          dueDate: task.dueDate ? new Date(task.dueDate) : null,
-        };
-        this.form.patchValue(patchData);
-      }
+    if (task) {
+      this.form.patchValue({
+        title: task.title,
+        description: task.description,
+        priority: task.priority,
+        status: task.status,
+        dueDate: task.dueDate ? new Date(task.dueDate) : null,
+        tags: task.tags,
+      });
     }
   }
 
+  private setupValidationReactors() {
+    this.form.controls.priority.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((priority) => {
+        const dateControl = this.form.controls.dueDate;
+
+        if (priority === 'Urgente') {
+          dateControl.setValidators([Validators.required]);
+        } else {
+          dateControl.clearValidators();
+        }
+        dateControl.updateValueAndValidity();
+      });
+  }
+
   onSubmit() {
-    this.form.updateValueAndValidity();
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       this.messageService.add({
         severity: 'error',
-        summary: 'Erro',
-        detail: 'Preencha os campos obrigatórios corretamente.',
+        summary: 'Atenção',
+        detail: 'Verifique os campos obrigatórios.',
       });
       return;
     }
 
-    const taskData: Task = {
-      id: this.taskId || this.generateTempId(),
-      ...this.form.value,
+    const formData = this.form.getRawValue();
+
+    const taskToSave: Task = {
+      id: this.id() || crypto.randomUUID(),
+      title: formData.title,
+      description: formData.description || '',
+      priority: formData.priority,
+      status: formData.status,
+      tags: formData.tags,
+      dueDate: formData.dueDate || undefined,
     };
 
-    if (this.isEditMode && this.taskId) {
-      this.taskState.updateTask(taskData);
+    if (this.isEditMode) {
+      this.taskState.updateTask(taskToSave);
     } else {
-      this.taskState.addTask(taskData);
+      this.taskState.addTask(taskToSave);
     }
 
     this.messageService.add({
       severity: 'success',
       summary: 'Sucesso',
-      detail: 'Tarefa salva!',
+      detail: 'Tarefa salva corretamente!',
     });
     this.router.navigate(['/']);
   }
 
   onCancel() {
     this.router.navigate(['/']);
-  }
-
-  private generateTempId(): string {
-    return Math.random().toString(36).substr(2, 9);
   }
 }

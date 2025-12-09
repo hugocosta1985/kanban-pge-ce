@@ -1,73 +1,51 @@
-import { Injectable, signal, computed, inject } from '@angular/core';
+import { Injectable, signal, computed, inject, Signal } from '@angular/core';
 import { Task, TaskStatus, TaskPriority } from '../models/task.model';
 import { TaskService } from './task.service';
 import { moveItemInArray } from '@angular/cdk/drag-drop';
+
+export type TasksGrouped = Record<TaskStatus, Task[]>;
 
 @Injectable({ providedIn: 'root' })
 export class TaskStateService {
   private taskService = inject(TaskService);
 
-  private tasks = signal<Task[]>([]);
-  private searchFilter = signal<string>('');
-  private priorityFilter = signal<TaskPriority | null>(null);
-  private dateRangeFilter = signal<Date[] | null>(null);
+  private _tasks = signal<Task[]>([]);
+  private _searchFilter = signal<string>('');
+  private _priorityFilter = signal<TaskPriority | null>(null);
+  private _dateRangeFilter = signal<Date[] | null>(null);
 
-  private priorityWeights: Record<string, number> = {
+  private readonly priorityWeights: Record<string, number> = {
     Urgente: 4,
     Alta: 3,
     Média: 2,
     Baixa: 1,
   };
 
+  readonly tasks = this._tasks.asReadonly();
+  readonly searchFilter = this._searchFilter.asReadonly();
+  readonly priorityFilter = this._priorityFilter.asReadonly();
+  readonly dateRangeFilter = this._dateRangeFilter.asReadonly();
+
   readonly urgentTasksCount = computed(
     () =>
-      this.tasks().filter(
+      this._tasks().filter(
         (t) => t.priority === 'Urgente' && t.status !== 'Concluído'
       ).length
   );
 
-  readonly tasksByStatus = computed(() => {
-    const term = this.searchFilter().toLowerCase();
-    const priority = this.priorityFilter();
-    const dateRange = this.dateRangeFilter();
-    const allTasks = this.tasks();
+  readonly tasksByStatus = computed<TasksGrouped>(() => {
+    const tasks = this._tasks();
+    const term = this._searchFilter().toLowerCase();
+    const priority = this._priorityFilter();
+    const dateRange = this._dateRangeFilter();
 
-    const filtered = allTasks.filter((task) => {
-      const matchesText =
-        task.title.toLowerCase().includes(term) ||
-        task.tags.some((tag) => tag.toLowerCase().includes(term));
-
-      const matchesPriority = priority ? task.priority === priority : true;
-
-      let matchesDate = true;
-      if (dateRange && dateRange[0]) {
-        if (!task.dueDate) {
-          matchesDate = false;
-        } else {
-          const taskDate = new Date(task.dueDate);
-          taskDate.setHours(0, 0, 0, 0);
-
-          const start = new Date(dateRange[0]);
-          start.setHours(0, 0, 0, 0);
-
-          const end = dateRange[1] ? new Date(dateRange[1]) : null;
-          if (end) end.setHours(23, 59, 59, 999);
-
-          if (end) {
-            matchesDate = taskDate >= start && taskDate <= end;
-          } else {
-            matchesDate = taskDate >= start;
-          }
-        }
-      }
-
-      return matchesText && matchesPriority && matchesDate;
-    });
-
+    const filtered = tasks.filter((task) =>
+      this.matchesFilters(task, term, priority, dateRange)
+    );
     const sorted = filtered.sort((a, b) => {
-      const weightA = this.priorityWeights[a.priority] || 0;
-      const weightB = this.priorityWeights[b.priority] || 0;
-      return weightB - weightA;
+      const wA = this.priorityWeights[a.priority] || 0;
+      const wB = this.priorityWeights[b.priority] || 0;
+      return wB - wA;
     });
 
     return {
@@ -77,68 +55,116 @@ export class TaskStateService {
     };
   });
 
-  getTasksByStatus(status: TaskStatus): Task[] {
-    return (this.tasksByStatus() as any)[status] || [];
-  }
-
   loadTasks() {
-    this.taskService.getAll().subscribe((tasks) => this.tasks.set(tasks));
+    this.taskService.getAll().subscribe((tasks) => this._tasks.set(tasks));
   }
 
   addTask(task: Task) {
-    this.tasks.update((current) => [...current, task]);
+    this._tasks.update((current) => [...current, task]);
+
     this.taskService.create(task).subscribe({
-      error: (err) => console.warn('API Error (salvo localmente):', err),
+      error: (err) => {
+        console.error('Falha ao criar, revertendo...', err);
+        this._tasks.update((t) => t.filter((x) => x.id !== task.id));
+      },
     });
   }
 
   updateTask(updatedTask: Task) {
-    this.tasks.update((current) =>
+    this._tasks.update((current) =>
       current.map((t) => (t.id === updatedTask.id ? updatedTask : t))
     );
-    this.taskService.update(updatedTask).subscribe({
-      error: (err) => console.warn('API Error (salvo localmente):', err),
-    });
+    this.taskService.update(updatedTask).subscribe();
+  }
+
+  getTasksByStatus(status: TaskStatus): Task[] {
+    return this.tasksByStatus()[status];
+  }
+
+  getTaskById(id: string): Task | undefined {
+    return this.tasks().find((t) => t.id === id);
   }
 
   updateTaskStatus(taskId: string, newStatus: TaskStatus) {
-    this.tasks.update((tasks) =>
+    this._tasks.update((tasks) =>
       tasks.map((t) => (t.id === taskId ? { ...t, status: newStatus } : t))
     );
 
-    const task = this.tasks().find((t) => t.id === taskId);
+    const task = this._tasks().find((t) => t.id === taskId);
     if (task) {
       this.taskService.update(task).subscribe();
     }
   }
 
   deleteTask(taskId: string) {
-    this.tasks.update((current) => current.filter((t) => t.id !== taskId));
+    const previousTasks = this._tasks();
+    this._tasks.update((current) => current.filter((t) => t.id !== taskId));
+
     this.taskService.delete(taskId).subscribe({
-      error: (err) => console.warn('API Error:', err),
+      error: (err) => {
+        console.error('Erro ao deletar, revertendo...', err);
+        this._tasks.set(previousTasks);
+      },
     });
   }
 
   reorderTask(status: TaskStatus, previousIndex: number, currentIndex: number) {
-    this.tasks.update((allTasks) => {
+    this._tasks.update((allTasks) => {
       const tasksInColumn = allTasks.filter((t) => t.status === status);
       moveItemInArray(tasksInColumn, previousIndex, currentIndex);
+
       const otherTasks = allTasks.filter((t) => t.status !== status);
       return [...otherTasks, ...tasksInColumn];
     });
   }
 
   setSearchFilter(term: string) {
-    this.searchFilter.set(term);
+    this._searchFilter.set(term);
   }
-  setPriorityFilter(priority: TaskPriority | null) {
-    this.priorityFilter.set(priority);
+  setPriorityFilter(p: TaskPriority | null) {
+    this._priorityFilter.set(p);
   }
-  setDateRangeFilter(range: Date[] | null) {
-    this.dateRangeFilter.set(range);
+  setDateRangeFilter(r: Date[] | null) {
+    this._dateRangeFilter.set(r);
   }
 
-  getTaskById(id: string): Task | undefined {
-    return this.tasks().find((t) => t.id === id);
+  private matchesFilters(
+    task: Task,
+    term: string,
+    priority: TaskPriority | null,
+    dateRange: Date[] | null
+  ): boolean {
+    const matchesText =
+      !term ||
+      task.title.toLowerCase().includes(term) ||
+      task.tags.some((tag) => tag.toLowerCase().includes(term));
+
+    const matchesPriority = !priority || task.priority === priority;
+
+    const matchesDate = this.isDateInRange(task.dueDate, dateRange);
+
+    return matchesText && matchesPriority && matchesDate;
+  }
+
+  private isDateInRange(
+    dateStr: string | Date | undefined,
+    range: Date[] | null
+  ): boolean {
+    if (!range || !range[0]) return true;
+    if (!dateStr) return false;
+
+    const taskDate = new Date(dateStr);
+    taskDate.setHours(0, 0, 0, 0);
+
+    const start = new Date(range[0]);
+    start.setHours(0, 0, 0, 0);
+
+    const end = range[1] ? new Date(range[1]) : null;
+    if (end) end.setHours(23, 59, 59, 999);
+
+    if (end) {
+      return taskDate >= start && taskDate <= end;
+    }
+    return taskDate >= start;
   }
 }

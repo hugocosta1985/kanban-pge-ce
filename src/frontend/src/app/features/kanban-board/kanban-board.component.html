@@ -6,7 +6,6 @@
           <h1 class="text-2xl font-bold text-gray-800">Quadro de Tarefas</h1>
           <p class="text-gray-500">Gerencie suas atividades diárias</p>
         </div>
-
         <app-urgent-badge></app-urgent-badge>
       </div>
 
@@ -28,26 +27,27 @@
           type="text"
           pInputText
           placeholder="Buscar..."
-          [(ngModel)]="searchTerm"
-          (ngModelChange)="onSearchChange($event)"
+          [ngModel]="searchTerm()"
+          (ngModelChange)="updateSearch($event)"
           class="w-full"
         />
       </p-iconfield>
 
       <p-dropdown
         [options]="priorityOptions"
-        [(ngModel)]="selectedPriority"
-        (onChange)="onPriorityChange($event.value)"
+        [ngModel]="selectedPriority()"
+        (ngModelChange)="updatePriority($event)"
         placeholder="Prioridade"
         [showClear]="true"
         styleClass="w-full sm:w-[180px]"
         [style]="{ width: '100%' }"
       >
       </p-dropdown>
+
       <div class="w-full sm:w-auto">
         <p-datepicker
-          [(ngModel)]="rangeDates"
-          (ngModelChange)="onDateRangeChange($event)"
+          [ngModel]="rangeDates()"
+          (ngModelChange)="updateDateRange($event)"
           selectionMode="range"
           [readonlyInput]="true"
           dateFormat="dd/mm/yy"
@@ -56,7 +56,7 @@
           styleClass="w-full sm:w-64"
           [style]="{ width: '100%' }"
           [showButtonBar]="true"
-          (onClearClick)="onDateRangeChange([])"
+          (onClearClick)="updateDateRange([])"
         >
         </p-datepicker>
       </div>
@@ -78,17 +78,17 @@
         <span
           class="bg-gray-200 text-gray-600 text-xs px-2 py-0.5 rounded-full"
         >
-          {{ getTasksByStatus(status).length }}
+          {{ tasksGrouped()[status].length }}
         </span>
       </div>
 
       <div
         cdkDropList
-        [cdkDropListData]="getTasksByStatus(status)"
+        [cdkDropListData]="tasksGrouped()[status]"
         (cdkDropListDropped)="drop($event, status)"
         class="flex-1 p-2 flex flex-col gap-3 overflow-y-auto min-h-[150px]"
       >
-        @for (task of getTasksByStatus(status); track task.id) {
+        @for (task of tasksGrouped()[status]; track task.id) {
         <div
           cdkDrag
           [cdkDragData]="task"
@@ -102,7 +102,7 @@
           <app-task-card
             [task]="task"
             (edit)="onEdit($event)"
-            (delete)="onDelete($event)"
+            (delete)="openDeleteModal($event)"
           >
           </app-task-card>
         </div>
@@ -115,8 +115,8 @@
   <app-confirm-modal
     [(visible)]="isDeleteModalOpen"
     title="Excluir Tarefa"
-    [message]="'Tem certeza que deseja excluir: ' + taskToDelete?.title + '?'"
-    (confirm)="confirmDelete()"
+    [message]="'Tem certeza que deseja excluir: ' + taskToDelete()?.title + '?'"
+    (onConfirm)="confirmDelete()"
   >
   </app-confirm-modal>
 </div>

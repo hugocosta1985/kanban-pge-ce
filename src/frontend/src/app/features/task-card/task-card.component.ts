@@ -5,14 +5,14 @@ import {
   output,
   computed,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { Task } from '../../core/models/task.model';
+import { DatePipe } from '@angular/common';
 
 import { CardModule } from 'primeng/card';
 import { TagModule } from 'primeng/tag';
 import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
 
+import { Task } from '../../core/models/task.model';
 import {
   PRIORITY_COLORS,
   TaskPriority,
@@ -22,9 +22,9 @@ import {
   selector: 'app-task-card',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, CardModule, TagModule, ButtonModule, TooltipModule],
+  imports: [CardModule, TagModule, ButtonModule, TooltipModule, DatePipe],
   templateUrl: './task-card.component.html',
-  styleUrls: ['./task-card.component.scss'],
+  styleUrl: './task-card.component.scss',
 })
 export class TaskCardComponent {
   task = input.required<Task>();

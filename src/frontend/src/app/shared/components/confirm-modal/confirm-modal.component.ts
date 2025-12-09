@@ -1,39 +1,35 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  EventEmitter,
   input,
-  Input,
-  Output,
+  model,
+  output,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
 
 @Component({
   selector: 'app-confirm-modal',
   standalone: true,
-  imports: [CommonModule, DialogModule, ButtonModule],
+  imports: [DialogModule, ButtonModule], // CommonModule removido
   templateUrl: './confirm-modal.component.html',
   styleUrl: './confirm-modal.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ConfirmModalComponent {
-  @Input() visible = false;
-  @Input() title = 'Confirmação';
-  @Input() message = 'Tem certeza que deseja prosseguir?';
+  visible = model.required<boolean>();
 
-  @Output() visibleChange = new EventEmitter<boolean>();
-  @Output() confirm = new EventEmitter<void>();
+  title = input('Confirmação');
+  message = input('Tem certeza que deseja prosseguir?');
 
-  onCancel() {
-    this.visible = false;
-    this.visibleChange.emit(false);
+  onConfirm = output<void>();
+
+  closeModal() {
+    this.visible.set(false);
   }
 
-  onConfirm() {
-    this.confirm.emit();
-    this.visible = false;
-    this.visibleChange.emit(false);
+  handleConfirm() {
+    this.onConfirm.emit();
+    this.closeModal();
   }
 }

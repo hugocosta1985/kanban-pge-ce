@@ -1,6 +1,8 @@
 <p-card
-  [style]="{ width: '100%', marginBottom: '10px' }"
-  styleClass="shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+  styleClass="w-full mb-3 shadow-sm hover:shadow-md transition-shadow cursor-pointer border-l-4"
+  [style]="{
+    'border-left-color': 'var(--' + prioritySeverity() + '-500)'
+  }"
 >
   <ng-template pTemplate="header">
     <div class="flex justify-between items-start p-3 pb-0">
@@ -8,58 +10,58 @@
         [value]="task().priority"
         [severity]="prioritySeverity()"
         [rounded]="true"
-      >
-      </p-tag>
+        styleClass="uppercase text-xs"
+      />
 
-      <div class="flex gap-1">
+      <div class="flex gap-1" (mousedown)="$event.stopPropagation()">
         <p-button
           icon="pi pi-pencil"
           [text]="true"
           severity="secondary"
           size="small"
-          (onClick)="edit.emit(task()); $event.stopPropagation()"
           pTooltip="Editar"
           tooltipPosition="bottom"
-        >
-        </p-button>
+          (onClick)="edit.emit(task())"
+        />
         <p-button
           icon="pi pi-trash"
           [text]="true"
           severity="danger"
           size="small"
-          (onClick)="delete.emit(task()); $event.stopPropagation()"
           pTooltip="Excluir"
           tooltipPosition="bottom"
-        >
-        </p-button>
+          (onClick)="delete.emit(task())"
+        />
       </div>
     </div>
   </ng-template>
 
-  <div class="px-1">
-    <h4 class="font-bold text-lg mb-2 text-gray-800">{{ task().title }}</h4>
+  <div class="px-3 pt-2">
+    <h4 class="font-bold text-gray-800 leading-tight mb-1">
+      {{ task().title }}
+    </h4>
 
     @if (task().description) {
-    <p class="text-sm text-gray-600 mb-3 line-clamp-2">
+    <p class="text-sm text-gray-500 line-clamp-2 mb-3">
       {{ task().description }}
     </p>
-    }
-
-    <div class="flex flex-wrap gap-1 mt-2">
+    } @if (task().tags.length) {
+    <div class="flex flex-wrap gap-1.5 mt-2">
       @for (tag of task().tags; track tag) {
       <span
-        class="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full border border-gray-200"
+        class="bg-gray-50 text-gray-600 text-xs px-2 py-0.5 rounded-md border border-gray-200"
       >
         #{{ tag }}
       </span>
       }
     </div>
+    }
   </div>
 
   <ng-template pTemplate="footer">
     @if (task().dueDate) {
     <div
-      class="flex items-center gap-2 text-xs text-gray-500 mt-2 border-t pt-2"
+      class="flex items-center gap-2 text-xs text-gray-400 mt-2 border-t border-gray-100 pt-2 px-3 pb-1"
     >
       <i class="pi pi-calendar"></i>
       <span>{{ task().dueDate | date : "dd/MM/yyyy" }}</span>

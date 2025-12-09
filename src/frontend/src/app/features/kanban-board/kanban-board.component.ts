@@ -1,65 +1,73 @@
 import {
   ChangeDetectionStrategy,
-  ChangeDetectorRef,
   Component,
-  OnInit,
+  computed,
+  effect,
   inject,
+  signal,
+  OnInit,
 } from '@angular/core';
 import { Router } from '@angular/router';
-import {
-  DragDropModule,
-  CdkDragDrop,
-  moveItemInArray,
-} from '@angular/cdk/drag-drop';
-import { UrgentBadgeComponent } from '../../shared/components/urgent-badge/urgent-badge.component';
-import { Task, TaskStatus } from '../../core/models/task.model';
-import { TaskStateService } from '../../core/services/task-state.service';
-import { TaskCardComponent } from '../task-card/task-card.component';
-import { ConfirmModalComponent } from '../../shared/components/confirm-modal/confirm-modal.component';
-import { MessageService } from 'primeng/api';
-import { ButtonModule } from 'primeng/button';
-import { TaskPriority } from '../../core/models/task.model';
+import { DragDropModule, CdkDragDrop } from '@angular/cdk/drag-drop';
 import { FormsModule } from '@angular/forms';
+
+import { ButtonModule } from 'primeng/button';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
 import { DropdownModule } from 'primeng/dropdown';
 import { DatePickerModule } from 'primeng/datepicker';
+import { MessageService } from 'primeng/api';
+
+import { UrgentBadgeComponent } from '../../shared/components/urgent-badge/urgent-badge.component';
+import { TaskCardComponent } from '../task-card/task-card.component';
+import { ConfirmModalComponent } from '../../shared/components/confirm-modal/confirm-modal.component';
+import { Task, TaskStatus, TaskPriority } from '../../core/models/task.model';
+import { TaskStateService } from '../../core/services/task-state.service';
 
 @Component({
   selector: 'app-kanban-board',
   standalone: true,
   imports: [
     DragDropModule,
-    TaskCardComponent,
-    ConfirmModalComponent,
+    FormsModule,
     ButtonModule,
     DatePickerModule,
-    FormsModule,
     IconFieldModule,
     InputIconModule,
     InputTextModule,
     DropdownModule,
+    TaskCardComponent,
     UrgentBadgeComponent,
+    ConfirmModalComponent,
   ],
   templateUrl: './kanban-board.component.html',
   styleUrl: './kanban-board.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class KanbanBoardComponent implements OnInit {
-  columns: TaskStatus[] = ['A Fazer', 'Em Andamento', 'Concluído'];
-  priorityOptions: TaskPriority[] = ['Baixa', 'Média', 'Alta', 'Urgente'];
+  readonly columns: TaskStatus[] = ['A Fazer', 'Em Andamento', 'Concluído'];
+  readonly priorityOptions: TaskPriority[] = [
+    'Baixa',
+    'Média',
+    'Alta',
+    'Urgente',
+  ];
 
-  private taskState = inject(TaskStateService);
-  private router = inject(Router);
-  private messageService = inject(MessageService);
-  private cdr = inject(ChangeDetectorRef);
+  private readonly taskState = inject(TaskStateService);
+  private readonly router = inject(Router);
+  private readonly messageService = inject(MessageService);
 
-  isDeleteModalOpen = false;
-  taskToDelete: Task | null = null;
-  searchTerm = '';
-  selectedPriority: TaskPriority | null = null;
-  rangeDates: Date[] | undefined;
+  searchTerm = signal('');
+  selectedPriority = signal<TaskPriority | null>(null);
+  rangeDates = signal<Date[] | undefined>(undefined);
+
+  isDeleteModalOpen = signal(false);
+  taskToDelete = signal<Task | null>(null);
+
+  tasksGrouped = this.taskState.tasksByStatus;
+
+  constructor() {}
 
   ngOnInit() {
     this.taskState.loadTasks();
@@ -73,35 +81,43 @@ export class KanbanBoardComponent implements OnInit {
     this.router.navigate(['/editar-tarefa', task.id]);
   }
 
-  onDateRangeChange(range: Date[]) {
-    this.taskState.setDateRangeFilter(range);
-  }
-
-  onDelete(task: Task) {
-    this.taskToDelete = task;
-    this.isDeleteModalOpen = true;
+  openDeleteModal(task: Task) {
+    this.taskToDelete.set(task);
+    this.isDeleteModalOpen.set(true);
   }
 
   confirmDelete() {
-    if (this.taskToDelete) {
-      this.taskState.deleteTask(this.taskToDelete.id);
+    const task = this.taskToDelete();
+    if (task) {
+      this.taskState.deleteTask(task.id);
       this.messageService.add({
         severity: 'success',
         summary: 'Sucesso',
         detail: 'Tarefa excluída corretamente',
       });
 
-      this.taskToDelete = null;
-      this.isDeleteModalOpen = false;
+      this.closeDeleteModal();
     }
   }
 
-  onSearchChange(term: string) {
+  closeDeleteModal() {
+    this.isDeleteModalOpen.set(false);
+    this.taskToDelete.set(null);
+  }
+
+  updateSearch(term: string) {
+    this.searchTerm.set(term);
     this.taskState.setSearchFilter(term);
   }
 
-  onPriorityChange(priority: TaskPriority | null) {
+  updatePriority(priority: TaskPriority | null) {
+    this.selectedPriority.set(priority);
     this.taskState.setPriorityFilter(priority);
+  }
+
+  updateDateRange(range: Date[]) {
+    this.rangeDates.set(range);
+    this.taskState.setDateRangeFilter(range);
   }
 
   drop(event: CdkDragDrop<Task[]>, newStatus: string) {
@@ -115,9 +131,5 @@ export class KanbanBoardComponent implements OnInit {
       const task = event.item.data as Task;
       this.taskState.updateTaskStatus(task.id, newStatus as TaskStatus);
     }
-  }
-
-  getTasksByStatus(status: TaskStatus): Task[] {
-    return this.taskState.getTasksByStatus(status);
   }
 }

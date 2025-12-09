@@ -4,7 +4,6 @@ import { TaskStateService } from '../../core/services/task-state.service';
 import { MessageService } from 'primeng/api';
 import { provideRouter } from '@angular/router';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { of } from 'rxjs';
 
 describe('TaskFormComponent', () => {
   let component: TaskFormComponent;
@@ -62,7 +61,7 @@ describe('TaskFormComponent', () => {
     expect(dateControl?.valid).toBeTrue();
   });
 
-  it('deve validar palavras proibidas no Título (Requisito 23)', () => {
+  it('deve validar palavras proibidas no Título', () => {
     const titleControl = component.form.get('title');
 
     titleControl?.setValue('Corrigir um bug crítico');

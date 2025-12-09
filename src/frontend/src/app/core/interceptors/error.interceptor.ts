@@ -8,9 +8,13 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   const messageService = inject(MessageService);
   const logService = inject(LogService);
 
-  return next(req).pipe(
+  const authReq = req.clone({
+    setHeaders: { 'X-API-Key': 'simulacao-pge-ceara-token' },
+  });
+
+  return next(authReq).pipe(
     catchError((error: HttpErrorResponse) => {
-      logService.logError(`API Error [${error.status}]: ${req.url}`, error);
+      logService.error(`API Error [${error.status}]: ${req.url}`, error);
 
       let userMessage =
         'Ocorreu um erro inesperado. Tente novamente mais tarde.';
@@ -26,28 +30,23 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
           if (!error.error?.message)
             userMessage = 'Verifique os dados enviados.';
           break;
-
         case 401:
           summary = 'Acesso Negado';
           userMessage = 'Sua sessão expirou. Faça login novamente.';
           break;
-
         case 403:
           summary = 'Proibido';
           userMessage = 'Você não tem permissão para realizar esta ação.';
           break;
-
         case 404:
           summary = 'Não Encontrado';
           userMessage = 'O recurso solicitado não existe.';
           break;
-
         case 500:
           summary = 'Erro no Servidor';
           userMessage =
             'Nossos servidores estão instáveis. Tente em instantes.';
           break;
-
         case 0:
           summary = 'Sem Conexão';
           userMessage = 'Verifique sua internet ou se o servidor está online.';
