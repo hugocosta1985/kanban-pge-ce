@@ -77,7 +77,7 @@ export class TaskFormComponent implements OnInit {
   constructor() {
     effect(() => {
       const taskId = this.id();
-      console.log('ID recebido pelo Router:', taskId); // Debug
+      console.log('ID recebido pelo Router:', taskId);
 
       if (taskId) {
         this.isEditMode = true;
