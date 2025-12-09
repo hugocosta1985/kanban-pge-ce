@@ -14,13 +14,6 @@ export class TaskStateService {
   private _priorityFilter = signal<TaskPriority | null>(null);
   private _dateRangeFilter = signal<Date[] | null>(null);
 
-  private readonly priorityWeights: Record<string, number> = {
-    Urgente: 4,
-    Alta: 3,
-    Média: 2,
-    Baixa: 1,
-  };
-
   readonly tasks = this._tasks.asReadonly();
   readonly searchFilter = this._searchFilter.asReadonly();
   readonly priorityFilter = this._priorityFilter.asReadonly();
@@ -42,16 +35,11 @@ export class TaskStateService {
     const filtered = tasks.filter((task) =>
       this.matchesFilters(task, term, priority, dateRange)
     );
-    const sorted = filtered.sort((a, b) => {
-      const wA = this.priorityWeights[a.priority] || 0;
-      const wB = this.priorityWeights[b.priority] || 0;
-      return wB - wA;
-    });
 
     return {
-      'A Fazer': sorted.filter((t) => t.status === 'A Fazer'),
-      'Em Andamento': sorted.filter((t) => t.status === 'Em Andamento'),
-      Concluído: sorted.filter((t) => t.status === 'Concluído'),
+      'A Fazer': filtered.filter((t) => t.status === 'A Fazer'),
+      'Em Andamento': filtered.filter((t) => t.status === 'Em Andamento'),
+      Concluído: filtered.filter((t) => t.status === 'Concluído'),
     };
   });
 
@@ -111,6 +99,7 @@ export class TaskStateService {
   reorderTask(status: TaskStatus, previousIndex: number, currentIndex: number) {
     this._tasks.update((allTasks) => {
       const tasksInColumn = allTasks.filter((t) => t.status === status);
+
       moveItemInArray(tasksInColumn, previousIndex, currentIndex);
 
       const otherTasks = allTasks.filter((t) => t.status !== status);

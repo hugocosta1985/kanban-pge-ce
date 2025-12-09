@@ -80,8 +80,20 @@
         <label class="font-semibold text-gray-700">Tags</label>
         <p-chips
           formControlName="tags"
+          [max]="5"
+          [addOnBlur]="true"
           placeholder="Digite e dê Enter"
+          [ngClass]="{
+            'ng-invalid ng-dirty':
+              form.controls.tags.invalid && form.controls.tags.touched
+          }"
         ></p-chips>
+        @if (form.controls.tags.hasError('maxTags') &&
+        form.controls.tags.touched) {
+        <small class="text-red-500">
+          O limite é de 5 tags. Remova algumas para continuar.
+        </small>
+        }
       </div>
 
       <div class="flex justify-end gap-2 mt-4 pt-4 border-t">

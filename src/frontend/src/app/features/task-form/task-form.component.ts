@@ -28,6 +28,8 @@ import { MessageService } from 'primeng/api';
 import { TaskStateService } from '../../core/services/task-state.service';
 import { Task, TaskPriority, TaskStatus } from '../../core/models/task.model';
 import { forbiddenWordValidator } from '../../shared/directives/forbidden-word.validator';
+import { maxTagsValidator } from '../../shared/directives/max-tags.validator';
+import { NgClass } from '@angular/common';
 
 interface TaskForm {
   title: FormControl<string>;
@@ -42,6 +44,7 @@ interface TaskForm {
   selector: 'app-task-form',
   standalone: true,
   imports: [
+    NgClass,
     ReactiveFormsModule,
     InputTextModule,
     TextareaModule,
@@ -108,7 +111,10 @@ export class TaskFormComponent implements OnInit {
       priority: new FormControl('Baixa', { nonNullable: true }),
       status: new FormControl('A Fazer', { nonNullable: true }),
       dueDate: new FormControl(null),
-      tags: new FormControl([], { nonNullable: true }),
+      tags: new FormControl([], {
+        nonNullable: true,
+        validators: [maxTagsValidator(5)],
+      }),
     });
   }
 
@@ -124,25 +130,45 @@ export class TaskFormComponent implements OnInit {
         dueDate: task.dueDate ? new Date(task.dueDate) : null,
         tags: task.tags,
       });
+      this.updateDateValidators(task.priority);
     }
+  }
+
+  private updateDateValidators(priority: TaskPriority) {
+    const dateControl = this.form.controls.dueDate;
+
+    if (priority === 'Urgente') {
+      this.form.markAllAsTouched();
+      if (!dateControl.hasValidator(Validators.required)) {
+        dateControl.setValidators([Validators.required]);
+      }
+    } else {
+      dateControl.clearValidators();
+    }
+    dateControl.updateValueAndValidity();
   }
 
   private setupValidationReactors() {
     this.form.controls.priority.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((priority) => {
-        const dateControl = this.form.controls.dueDate;
-
-        if (priority === 'Urgente') {
-          dateControl.setValidators([Validators.required]);
-        } else {
-          dateControl.clearValidators();
-        }
-        dateControl.updateValueAndValidity();
+        this.updateDateValidators(priority);
       });
   }
 
   onSubmit() {
+    const rawValue = this.form.getRawValue();
+    if (rawValue.priority === 'Urgente' && !rawValue.dueDate) {
+      this.form.controls.dueDate.setErrors({ required: true });
+      this.form.controls.dueDate.markAsTouched();
+
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Erro de Validação',
+        detail: 'Tarefas Urgentes exigem uma Data de Entrega/Prazo.',
+      });
+      return;
+    }
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       this.messageService.add({
@@ -162,7 +188,7 @@ export class TaskFormComponent implements OnInit {
       priority: formData.priority,
       status: formData.status,
       tags: formData.tags,
-      dueDate: formData.dueDate || undefined,
+      dueDate: formData.dueDate ? formData.dueDate.toISOString() : undefined,
     };
 
     if (this.isEditMode) {
@@ -176,7 +202,9 @@ export class TaskFormComponent implements OnInit {
       summary: 'Sucesso',
       detail: 'Tarefa salva corretamente!',
     });
-    this.router.navigate(['/']);
+    setTimeout(() => {
+      this.router.navigate(['/']);
+    }, 100);
   }
 
   onCancel() {

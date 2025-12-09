@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TaskStateService } from '../../../core/services/task-state.service';
 import { BadgeModule } from 'primeng/badge';
@@ -12,5 +12,7 @@ import { TooltipModule } from 'primeng/tooltip';
   styleUrl: './urgent-badge.component.scss',
 })
 export class UrgentBadgeComponent {
-  protected taskState = inject(TaskStateService);
+  private taskState = inject(TaskStateService);
+  urgentTasksCount = computed(() => this.taskState.urgentTasksCount());
+  hasUrgentTasks = computed(() => this.urgentTasksCount() > 0);
 }
