@@ -39,7 +39,7 @@ export class TaskStateService {
     return {
       'A Fazer': filtered.filter((t) => t.status === 'A Fazer'),
       'Em Andamento': filtered.filter((t) => t.status === 'Em Andamento'),
-      Concluído: filtered.filter((t) => t.status === 'Concluído'),
+      'Concluído': filtered.filter((t) => t.status === 'Concluído'),
     };
   });
 

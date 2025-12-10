@@ -72,7 +72,11 @@ export class TaskFormComponent implements OnInit {
     'Em Andamento',
     'Concluído',
   ];
-  readonly minDate = new Date();
+  readonly minDate = (() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return today;
+  })();
 
   form!: FormGroup<TaskForm>;
   isEditMode = false;
