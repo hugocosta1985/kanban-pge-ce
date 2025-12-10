@@ -13,7 +13,7 @@ describe('TaskCardComponent', () => {
     priority: 'Média',
     tags: ['tag1'],
     status: 'A Fazer',
-    dueDate: new Date(),
+    dueDate: new Date().toISOString(),
   };
 
   beforeEach(async () => {
