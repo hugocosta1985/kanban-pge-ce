@@ -20,11 +20,6 @@ export class LogService {
       timestamp: new Date(),
       context,
     };
-
-    console.log(
-      `[${entry.level}] ${entry.timestamp.toISOString()}: ${entry.message}`,
-      context || ''
-    );
   }
 
   error(message: string, error: any) {
