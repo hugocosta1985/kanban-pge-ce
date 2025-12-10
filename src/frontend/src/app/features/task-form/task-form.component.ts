@@ -27,8 +27,8 @@ import { MessageService } from 'primeng/api';
 
 import { TaskStateService } from '../../core/services/task-state.service';
 import { Task, TaskPriority, TaskStatus } from '../../core/models/task.model';
-import { forbiddenWordValidator } from '../../shared/directives/forbidden-word.validator';
-import { maxTagsValidator } from '../../shared/directives/max-tags.validator';
+import { forbiddenWordValidator } from '../../shared/validators/forbidden-word.validator';
+import { maxTagsValidator } from '../../shared/validators/max-tags.validator';
 import { NgClass } from '@angular/common';
 
 interface TaskForm {
